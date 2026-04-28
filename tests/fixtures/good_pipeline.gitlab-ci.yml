@@ -1,0 +1,72 @@
+# Эталонный конфиг: следует всем best practices
+# Этот файл должен возвращать 0 issues (или только INFO)
+
+image: python:3.12-slim
+
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  APP_ENV: "production"
+  DB_PASSWORD: $DB_PASSWORD  # ссылка на protected переменную GitLab
+
+default:
+  before_script:
+    - pip install --cache-dir .pip-cache -r requirements.txt
+  cache:
+    key: "$CI_COMMIT_REF_SLUG-pip"
+    paths:
+      - .pip-cache/
+
+build-app:
+  description: "Сборка приложения и создание артефактов"
+  stage: build
+  script:
+    - python setup.py build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+run-tests:
+  description: "Запуск unit и integration тестов"
+  stage: test
+  script:
+    - pytest tests/ --cov=app --cov-report=xml
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 1 week
+
+deploy-staging:
+  description: "Деплой в staging окружение"
+  stage: deploy
+  script:
+    - ./scripts/deploy.sh staging
+  environment:
+    name: staging
+    url: https://staging.example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  retry:
+    max: 2
+    when: runner_system_failure
+
+deploy-production:
+  description: "Деплой в production (только по тегу)"
+  stage: deploy
+  script:
+    - ./scripts/deploy.sh production
+  environment:
+    name: production
+    url: https://example.com
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+  retry:
+    max: 2
+    when: runner_system_failure
+  when: manual
