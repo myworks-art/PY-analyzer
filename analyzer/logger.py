@@ -1,4 +1,4 @@
-"""
+""
 analyzer/logger.py — централизованное логирование.
 
 Конфигурирует один логгер для всего приложения.
@@ -15,12 +15,15 @@ analyzer/logger.py — централизованное логирование.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 # ── Константы ──────────────────────────────────────────────────────────────
-LOG_DIR  = Path("logs")
+# В Docker логи пишем в /app/logs, локально — в ./logs рядом с проектом
+_DEFAULT_LOG_DIR = "/app/logs" if Path("/app/logs").exists() else "logs"
+LOG_DIR  = Path(os.getenv("LOG_DIR", _DEFAULT_LOG_DIR))
 LOG_FILE = LOG_DIR / "analyzer.log"
 
 # Формат строки лога
