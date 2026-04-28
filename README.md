@@ -9,7 +9,7 @@
 
 ## Быстрый старт
 
-### Docker (рекомендуется)
+### Docker
 
 ```bash
 git clone https://github.com/myworks-art/PY-analyzer.git
