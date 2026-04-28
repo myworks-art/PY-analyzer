@@ -1,10 +1,7 @@
 ""
 analyzer/logger.py — централизованное логирование.
 
-Конфигурирует один логгер для всего приложения.
-Пишет одновременно в консоль и в файл logs/analyzer.log.
-
-Использование:
+Запись идет в консоль и в файл logs/analyzer.
     from analyzer.logger import get_logger
     log = get_logger(__name__)
     log.info("Парсинг файла %s", filename)
