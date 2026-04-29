@@ -1,5 +1,4 @@
-"""Тесты для правил безопасности (SEC001–SEC006)."""
-
+# SEC001–SEC006
 import pytest
 from analyzer.parsers.yaml_parser import YamlParser
 from analyzer.rules.security import (
@@ -21,9 +20,9 @@ def parse(yaml_text: str):
     return YamlParser().parse_string(yaml_text)
 
 
-# ---------------------------------------------------------------------------
-# SEC001 — Секреты в переменных
-# ---------------------------------------------------------------------------
+# 
+# SEC001
+# 
 
 class TestSecretInVariable:
     rule = SecretInVariableRule()
@@ -53,7 +52,6 @@ deploy:
         assert issues[0].job_name == "deploy"
 
     def test_ignores_variable_reference(self):
-        """Ссылка $DB_PASSWORD — не секрет, а безопасная переменная."""
         pipeline = parse("""
 variables:
   DB_PASSWORD: $DB_PASSWORD
@@ -94,12 +92,11 @@ build:
 """)
         issues = self.rule.check(pipeline)
         assert len(issues) == 1
-        assert issues[0].line == 2  # строка с DB_PASSWORD
+        assert issues[0].line == 2 
 
-
-# ---------------------------------------------------------------------------
-# SEC002 — Тег latest
-# ---------------------------------------------------------------------------
+# 
+# SEC002
+# 
 
 class TestLatestImageTag:
     rule = LatestImageTagRule()
@@ -115,7 +112,6 @@ build:
         assert issues[0].rule_id == "SEC002"
 
     def test_detects_image_without_tag(self):
-        """Образ без тега = latest по умолчанию."""
         pipeline = parse("""
 image: python
 build:
@@ -159,9 +155,9 @@ test:
         assert len(issues) == 2
 
 
-# ---------------------------------------------------------------------------
-# SEC004 — Публичные артефакты
-# ---------------------------------------------------------------------------
+# 
+# SEC004
+# 
 
 class TestPublicArtifacts:
     rule = PublicArtifactsRule()
@@ -192,9 +188,9 @@ build:
         assert len(issues) == 0
 
 
-# ---------------------------------------------------------------------------
-# SEC006 — curl | bash
-# ---------------------------------------------------------------------------
+# 
+# SEC006 
+# 
 
 class TestCurlPipeBash:
     rule = CurlPipeBashRule()
