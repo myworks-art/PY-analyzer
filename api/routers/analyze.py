@@ -1,7 +1,3 @@
-"""
-Роутер анализа: POST /analyze
-Принимает YAML как текст (JSON body) или как загружаемый файл (multipart/form-data).
-"""
 from __future__ import annotations
 
 import hashlib
@@ -23,16 +19,15 @@ log = get_logger("api.analyze")
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
 _parser = YamlParser()
-MAX_YAML_SIZE = 512 * 1024  # 512 KB
+MAX_YAML_SIZE = 512 * 1024
 
 
-# ---------------------------------------------------------------------------
-# Хелперы
-# ---------------------------------------------------------------------------
+#
+# Helpers
+#
 
 def _run_analysis(content: str, filename: str) -> tuple[list, dict]:
-    """Парсим YAML и запускаем правила. Возвращает (issues, summary)."""
-    try:
+     try:
         pipeline = _parser.parse_string(content, filename=filename)
     except Exception as e:
         raise HTTPException(
@@ -57,7 +52,6 @@ async def _save_to_db(
     issues: list,
     summary: dict,
 ) -> Analysis:
-    """Сохранить результат анализа в БД."""
     yaml_hash = hashlib.sha256(content.encode()).hexdigest()
 
     record = Analysis(
@@ -69,7 +63,7 @@ async def _save_to_db(
         info_count=summary["info"],
     )
     db.add(record)
-    await db.flush()  # получаем record.id
+    await db.flush() 
 
     for issue in issues:
         db.add(IssueRecord(
@@ -103,8 +97,8 @@ def _build_response(record: Analysis, issues: list) -> AnalysisResultSchema:
         issues=[
             IssueSchema(
                 rule_id=i.rule_id,
-                severity=i.severity,          # type: ignore[arg-type]
-                category=i.category,          # type: ignore[arg-type]
+                severity=i.severity,
+                category=i.category,
                 message=i.message,
                 location=i.location_str(),
                 line=i.line,
@@ -118,9 +112,9 @@ def _build_response(record: Analysis, issues: list) -> AnalysisResultSchema:
     )
 
 
-# ---------------------------------------------------------------------------
-# Эндпоинты
-# ---------------------------------------------------------------------------
+#
+# Endpoints
+#
 
 @router.post(
     "/",
