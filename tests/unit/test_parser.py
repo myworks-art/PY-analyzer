@@ -1,5 +1,3 @@
-"""Тесты для YAML парсера."""
-
 import pytest
 from analyzer.parsers.yaml_parser import YamlParser, ParsedPipeline
 
@@ -9,12 +7,11 @@ def parser():
     return YamlParser()
 
 
-# ---------------------------------------------------------------------------
+# 
 # Базовый парсинг
-# ---------------------------------------------------------------------------
+# 
 
 def test_parse_empty_file(parser):
-    """Пустой файл не должен падать."""
     pipeline = parser.parse_string("")
     assert pipeline.jobs == []
     assert pipeline.stages == []
@@ -56,9 +53,9 @@ build:
     assert pipeline.variables["VERSION"] == "1.0.0"
 
 
-# ---------------------------------------------------------------------------
-# Джобы
-# ---------------------------------------------------------------------------
+# 
+# Jobs
+# 
 
 def test_parse_single_job(parser):
     yaml = """
@@ -92,7 +89,6 @@ deploy:
 
 
 def test_reserved_keys_not_parsed_as_jobs(parser):
-    """stages, variables, default — не джобы."""
     yaml = """
 stages:
   - build
@@ -114,9 +110,9 @@ build:
     assert "build" in job_names
 
 
-# ---------------------------------------------------------------------------
-# Позиции (line:col)
-# ---------------------------------------------------------------------------
+# 
+# line:col)
+# 
 
 def test_job_position_is_tracked(parser):
     yaml = """stages:
@@ -127,7 +123,6 @@ build:
 """
     pipeline = parser.parse_string(yaml)
     build_job = next(j for j in pipeline.jobs if j.name == "build")
-    # "build:" начинается на строке 4 (1-based)
     assert build_job.pos.line == 4
 
 
@@ -143,12 +138,11 @@ build:
     assert pipeline.image_pos.line == 3
 
 
-# ---------------------------------------------------------------------------
-# Сложные случаи
-# ---------------------------------------------------------------------------
+# 
+# Unexpected
+# 
 
 def test_parse_image_as_mapping(parser):
-    """image: может быть строкой или маппингом с name/entrypoint."""
     yaml = """
 build:
   image:
@@ -157,7 +151,6 @@ build:
   script: echo hi
 """
     pipeline = parser.parse_string(yaml)
-    # image в маппинге джоба — не глобальный
     assert pipeline.image is None
     assert len(pipeline.jobs) == 1
 
