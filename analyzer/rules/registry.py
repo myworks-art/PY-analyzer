@@ -1,18 +1,13 @@
-"""
-Реестр правил анализатора.
-
-Все правила регистрируются декоратором @registry.register
-и автоматически собираются в один список.
-
-Использование:
-    from analyzer.rules.registry import registry
-
-    # Получить все правила
-    all_rules = registry.get_all()
-
-    # Запустить все правила на пайплайне
-    issues = registry.run_all(pipeline)
-"""
+#
+#Использование:
+#    from analyzer.rules.registry import registry
+#
+# Получить все правила
+#    all_rules = registry.get_all()
+#
+# Запустить все правила на пайплайне
+#   issues = registry.run_all(pipeline)
+#
 
 from __future__ import annotations
 
@@ -28,7 +23,6 @@ if TYPE_CHECKING:
 
 
 class RuleRegistry:
-    """Реестр всех правил анализатора."""
 
     def __init__(self) -> None:
         self._rules: list[Type[BaseRule]] = []
@@ -53,7 +47,6 @@ class RuleRegistry:
         for rule in self.get_all():
             try:
                 issues = rule.check(pipeline)
-                # Проставляем filename во все Issue
                 for issue in issues:
                     issue.filename = pipeline.filename
                 all_issues.extend(issues)
@@ -72,7 +65,6 @@ class RuleRegistry:
         all_issues.sort(key=lambda i: severity_order.get(i.severity, 99))
 
         log.info(
-            "Анализ завершён: %d проблем (%d ERR / %d WARN / %d INFO)",
             len(all_issues),
             sum(1 for i in all_issues if i.severity == Severity.ERROR),
             sum(1 for i in all_issues if i.severity == Severity.WARNING),
