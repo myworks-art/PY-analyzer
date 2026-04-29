@@ -1,42 +1,41 @@
-# Тестовый файл: намеренно содержит множество проблем
+# Тестовый файл
 # Используется для ручного и автоматического тестирования анализатора
 
-image: python:latest  # SEC002: latest tag
+image: python:latest  # SEC002
 
 variables:
-  DB_PASSWORD: "supersecret123"   # SEC001: секрет в открытом виде
-  API_TOKEN: "ghp_xxxxxxxxxxxx"   # SEC001: токен в открытом виде
+  DB_PASSWORD: "supersecret123"   # SEC001
+  API_TOKEN: "ghp_xxxxxxxxxxxx"   # SEC001
   APP_ENV: "production"
 
 stages:
   - build
-  - deploy  # REL004: нет стадии test
+  - deploy  # REL004
 
 build-app:
   stage: build
   before_script:
     - apt-get update
-    - pip install -r requirements.txt  # PERF001: нет cache
+    - pip install -r requirements.txt  # PERF001
   script:
     - python setup.py build
   artifacts:
     paths:
-      - dist/
-    # PERF002: нет expire_in
-    public: true  # SEC004: публичные артефакты
+      - dist/  # PERF002
+    public: true  # SEC004
 
-run_tests:  # BP002: snake_case при kebab-case у других
+run_tests:  # BP002
   stage: build
   before_script:
     - apt-get update
-    - pip install -r requirements.txt  # PERF001 + PERF005: дублирование
+    - pip install -r requirements.txt  # PERF001 + PERF005
   script:
     - pytest tests/
 
-deploy-Production:  # REL005: нет rules/only
+deploy-Production:  # REL005
   stage: deploy
   script:
     - curl https://raw.githubusercontent.com/example/deploy/main/deploy.sh | bash  # SEC006
-  timeout: 4h  # PERF003: избыточный таймаут
-  # REL001: нет retry
-  # BP003: нет environment
+  timeout: 4h  # PERF003
+  # REL001
+  # BP003
