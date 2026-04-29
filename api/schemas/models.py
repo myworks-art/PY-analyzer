@@ -1,6 +1,3 @@
-"""
-Pydantic-схемы для запросов и ответов API.
-"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -22,13 +19,12 @@ class CategoryEnum(str, Enum):
     best_practices = "best_practices"
 
 
-# ---------------------------------------------------------------------------
+#
 # Request
-# ---------------------------------------------------------------------------
+#
 
 class AnalyzeRequest(BaseModel):
-    """Тело запроса POST /analyze при передаче YAML как текста."""
-    content: str = Field(..., description="Содержимое .gitlab-ci.yml", min_length=1)
+     content: str = Field(..., description="Содержимое .gitlab-ci.yml", min_length=1)
     filename: str = Field(default=".gitlab-ci.yml", description="Имя файла для отчёта")
 
     model_config = {
@@ -41,9 +37,9 @@ class AnalyzeRequest(BaseModel):
     }
 
 
-# ---------------------------------------------------------------------------
+#
 # Response
-# ---------------------------------------------------------------------------
+#
 
 class IssueSchema(BaseModel):
     rule_id: str = Field(..., examples=["SEC001"])
@@ -76,8 +72,7 @@ class AnalysisResultSchema(BaseModel):
 
 
 class AnalysisListItemSchema(BaseModel):
-    """Краткая запись для GET /history."""
-    id: int
+     id: int
     filename: str
     created_at: datetime
     summary: SummarySchema
