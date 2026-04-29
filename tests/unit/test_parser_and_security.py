@@ -1,17 +1,11 @@
-"""
-Unit-тесты для парсера и правил безопасности.
-
-Запуск:
-    pytest tests/unit/test_parser_and_security.py -v
-"""
-
+# Запуск: pytest tests/unit/test_parser_and_security.py -v
 import pytest
 from analyzer.parsers.yaml_parser import YamlParser
 
 
-# ---------------------------------------------------------------------------
+#
 # Вспомогательная функция
-# ---------------------------------------------------------------------------
+#
 
 def parse(yaml_text: str):
     return YamlParser().parse_string(yaml_text)
@@ -22,9 +16,9 @@ def run_rule(rule_class, yaml_text: str):
     return rule_class().check(pipeline)
 
 
-# ---------------------------------------------------------------------------
-# Тесты парсера
-# ---------------------------------------------------------------------------
+#
+# Tests
+#
 
 class TestYamlParser:
 
@@ -84,7 +78,7 @@ build-app:
     - echo hello
 """)
         job = pipeline.jobs[0]
-        assert job.pos.line > 0  # позиция должна быть ненулевой
+        assert job.pos.line > 0  
 
     def test_reserved_keys_not_parsed_as_jobs(self):
         pipeline = parse("""
@@ -99,7 +93,7 @@ build:
   script:
     - echo build
 """)
-        # Только 'build' должен быть джобом
+
         assert len(pipeline.jobs) == 1
         assert pipeline.jobs[0].name == "build"
 
@@ -113,14 +107,14 @@ my-job:
   extends: .base
   stage: build
 """)
-        # my-job использует extends — должен определиться как джоб
+
         job_names = [j.name for j in pipeline.jobs]
         assert "my-job" in job_names
 
 
-# ---------------------------------------------------------------------------
-# Тесты SEC001 — Секреты в переменных
-# ---------------------------------------------------------------------------
+#
+# SEC001
+#
 
 class TestSEC001:
 
@@ -184,9 +178,9 @@ variables:
         assert issues[0].fix_suggestion is not None
 
 
-# ---------------------------------------------------------------------------
-# Тесты SEC002 — Latest tag
-# ---------------------------------------------------------------------------
+# 
+# SEC002
+# 
 
 class TestSEC002:
 
@@ -222,9 +216,9 @@ build:
         assert issues[0].job_name == "build"
 
 
-# ---------------------------------------------------------------------------
-# Тесты SEC006 — curl | bash
-# ---------------------------------------------------------------------------
+# 
+# SEC006
+# 
 
 class TestSEC006:
 
@@ -265,9 +259,9 @@ download:
         assert issues == []
 
 
-# ---------------------------------------------------------------------------
-# Тесты PERF001 — Нет кэша зависимостей
-# ---------------------------------------------------------------------------
+# 
+# PERF001
+# 
 
 class TestPERF001:
 
@@ -310,9 +304,9 @@ frontend:
         assert len(issues) == 1
 
 
-# ---------------------------------------------------------------------------
-# Тесты REL004 — Нет стадии test
-# ---------------------------------------------------------------------------
+# 
+# REL004
+# 
 
 class TestREL004:
 
