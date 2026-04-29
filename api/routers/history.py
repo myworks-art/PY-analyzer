@@ -1,6 +1,7 @@
-"""
-Роутер истории: GET /history, GET /result/{id}, DELETE /result/{id}
-"""
+#
+# GET /history, GET /result/{id}, DELETE /result/{id}
+#
+
 from __future__ import annotations
 
 from typing import Annotated
@@ -21,9 +22,9 @@ from api.schemas.models import (
 router = APIRouter(tags=["history"])
 
 
-# ---------------------------------------------------------------------------
+#
 # GET /history
-# ---------------------------------------------------------------------------
+#
 
 @router.get(
     "/history",
@@ -60,9 +61,9 @@ async def get_history(
     ]
 
 
-# ---------------------------------------------------------------------------
+#
 # GET /result/{id}
-# ---------------------------------------------------------------------------
+#
 
 @router.get(
     "/result/{analysis_id}",
@@ -99,8 +100,8 @@ async def get_result(
         issues=[
             IssueSchema(
                 rule_id=i.rule_id,
-                severity=i.severity,  # type: ignore[arg-type]
-                category=i.category,  # type: ignore[arg-type]
+                severity=i.severity,
+                category=i.category,
                 message=i.message,
                 line=i.line,
                 col=i.col,
@@ -112,9 +113,9 @@ async def get_result(
     )
 
 
-# ---------------------------------------------------------------------------
+#
 # DELETE /result/{id}
-# ---------------------------------------------------------------------------
+#
 
 @router.delete(
     "/result/{analysis_id}",
