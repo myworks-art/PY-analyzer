@@ -1,6 +1,6 @@
-"""
-Правила best practices (BP001–BP005).
-"""
+#
+# best practices (BP001–BP005).
+#
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ from analyzer.rules.registry import registry
 
 @registry.register
 class NoJobDescriptionRule(BaseRule):
-    """BP001 — Джоб не имеет описания."""
 
     rule_id = "BP001"
     severity = Severity.INFO
@@ -25,11 +24,6 @@ class NoJobDescriptionRule(BaseRule):
     def check(self, pipeline: ParsedPipeline) -> list:
         issues = []
         for job in pipeline.jobs:
-            # В GitLab CI нет встроенного поля description,
-            # но есть общепринятое соглашение использовать комментарий или
-            # кастомное поле — проверим наличие хотя бы одного из них
-            # Также проверяем: есть ли хоть одна строка-комментарий перед джобом
-            # Для MVP: просто информационное сообщение для всех джобов без "description"
             if "description" not in job.data:
                 issues.append(
                     self._make_issue(
@@ -47,14 +41,12 @@ class NoJobDescriptionRule(BaseRule):
 
 @registry.register
 class NamingConventionRule(BaseRule):
-    """BP002 — Нарушение единого стиля именования джобов."""
 
     rule_id = "BP002"
     severity = Severity.INFO
     category = Category.BEST_PRACTICES
     description = "Имена джобов не следуют единому стилю (kebab-case / snake_case)"
 
-    # Допустимые стили
     _KEBAB = re.compile(r"^[a-z][a-z0-9-]*$")
     _SNAKE = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -70,12 +62,10 @@ class NamingConventionRule(BaseRule):
             elif self._SNAKE.match(name) and "_" in name:
                 styles["snake"].append(name)
             elif self._KEBAB.match(name) or self._SNAKE.match(name):
-                # Однословные — нейтральные, не считаем
                 pass
             else:
                 styles["other"].append(name)
 
-        # Несколько стилей одновременно — нарушение
         active = [k for k, v in styles.items() if k != "other" and v]
         if len(active) >= 2:
             return [
@@ -92,7 +82,6 @@ class NamingConventionRule(BaseRule):
 
 @registry.register
 class NoEnvironmentRule(BaseRule):
-    """BP003 — Джоб деплоя не использует environment."""
 
     rule_id = "BP003"
     severity = Severity.INFO
@@ -124,7 +113,6 @@ class NoEnvironmentRule(BaseRule):
 
 @registry.register
 class MissingStagesSectionRule(BaseRule):
-    """BP005 — Отсутствует секция stages."""
 
     rule_id = "BP005"
     severity = Severity.WARNING
@@ -147,28 +135,24 @@ class MissingStagesSectionRule(BaseRule):
 
 @registry.register
 class ConfigDuplicationRule(BaseRule):
-    """BP004 — Дублирование конфигурации между джобами (image, variables, services)."""
 
     rule_id = "BP004"
     severity = Severity.WARNING
     category = Category.BEST_PRACTICES
     description = "Несколько джобов содержат идентичные блоки конфигурации"
 
-    # Ключи, дублирование которых считаем значимым
     _CHECK_KEYS = ("image", "services", "variables")
-    _MIN_JOBS = 2  # минимум джобов с одинаковым блоком
+    _MIN_JOBS = 2
 
     def check(self, pipeline: ParsedPipeline) -> list:
         issues = []
 
         for key in self._CHECK_KEYS:
-            # Собираем значения ключа по всем джобам
-            values: dict[str, list[str]] = {}  # repr(value) -> [job_names]
+            values: dict[str, list[str]] = {}
             for job in pipeline.jobs:
                 val = job.data.get(key)
                 if val is None:
                     continue
-                # Нормализуем в строку для сравнения
                 val_repr = repr(dict(val)) if hasattr(val, "items") else repr(val)
                 values.setdefault(val_repr, []).append(job.name)
 
