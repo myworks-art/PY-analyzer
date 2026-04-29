@@ -1,6 +1,6 @@
-"""
-Правила надёжности (REL001–REL005).
-"""
+#
+# Reliability (REL001–REL005).
+#
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ from analyzer.rules.registry import registry
 
 @registry.register
 class NoRetryRule(BaseRule):
-    """REL001 — Джоб деплоя не настроен на повтор."""
 
     rule_id = "REL001"
     severity = Severity.INFO
@@ -47,7 +46,6 @@ class NoRetryRule(BaseRule):
 
 @registry.register
 class NoTestStageRule(BaseRule):
-    """REL004 — В пайплайне нет стадии тестирования."""
 
     rule_id = "REL004"
     severity = Severity.WARNING
@@ -61,7 +59,6 @@ class NoTestStageRule(BaseRule):
 
         all_stage_names = {s.lower() for s in pipeline.stages}
 
-        # Также собираем stage из самих джобов (если stages не объявлены)
         for job in pipeline.jobs:
             stage = job.data.get("stage")
             if isinstance(stage, str):
@@ -83,7 +80,6 @@ class NoTestStageRule(BaseRule):
 
 @registry.register
 class DeployWithoutRulesRule(BaseRule):
-    """REL005 — Джоб деплоя запускается без условий."""
 
     rule_id = "REL005"
     severity = Severity.WARNING
@@ -125,7 +121,6 @@ class DeployWithoutRulesRule(BaseRule):
 
 @registry.register
 class NoStagesDeclaredRule(BaseRule):
-    """REL003 — Секция stages не объявлена явно."""
 
     rule_id = "REL003"
     severity = Severity.INFO
@@ -148,14 +143,12 @@ class NoStagesDeclaredRule(BaseRule):
 
 @registry.register
 class UnpinnedDependenciesRule(BaseRule):
-    """REL002 — Зависимости устанавливаются без фиксации версии."""
 
     rule_id = "REL002"
     severity = Severity.WARNING
     category = Category.RELIABILITY
     description = "Зависимости устанавливаются без фиксированных версий"
 
-    # Команды без requirements-файла и без == в аргументах
     _UNPINNED_PATTERNS = re.compile(
         r"\b(pip3?\s+install|npm\s+install|yarn\s+add|gem\s+install|"
         r"composer\s+require|cargo\s+add)\s+(?!-r\s)(?!--requirement)"
@@ -165,7 +158,7 @@ class UnpinnedDependenciesRule(BaseRule):
 
     def check(self, pipeline: ParsedPipeline) -> list:
         issues = []
-        seen_jobs: set[str] = set()  # не дублируем одинаковые джобы
+        seen_jobs: set[str] = set()
 
         for job in pipeline.jobs:
             if job.name in seen_jobs:
@@ -196,5 +189,5 @@ class UnpinnedDependenciesRule(BaseRule):
                             )
                         )
                         seen_jobs.add(job.name)
-                        break  # одно замечание на джоб
+                        break
         return issues
