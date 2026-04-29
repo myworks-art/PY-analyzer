@@ -1,13 +1,11 @@
-"""
-FastAPI приложение — точка входа для backend.
+# backend entrance point
+#
+# Запуск: uvicorn api.main:app --reload --port 8000
+#
+# Документация:
+#   http://localhost:8000/docs     (Swagger UI)
+#   http://localhost:8000/redoc    (ReDoc)
 
-Запуск:
-    uvicorn api.main:app --reload --port 8000
-
-Документация:
-    http://localhost:8000/docs     (Swagger UI)
-    http://localhost:8000/redoc    (ReDoc)
-"""
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -27,20 +25,20 @@ import os
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
 _ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
-# ---------------------------------------------------------------------------
+# 
 # Lifespan — инициализация при старте
-# ---------------------------------------------------------------------------
+# 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     yield
-    # здесь можно добавить cleanup при остановке
+    # cleanup can be added
 
 
-# ---------------------------------------------------------------------------
+# 
 # Приложение
-# ---------------------------------------------------------------------------
+# 
 
 app = FastAPI(
     title="CI/CD Pipeline Analyzer",
@@ -55,7 +53,7 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS — разрешаем запросы от React dev server
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
@@ -64,14 +62,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключаем роутеры
 app.include_router(analyze.router)
 app.include_router(history.router)
 
 
-# ---------------------------------------------------------------------------
+#
 # Health check
-# ---------------------------------------------------------------------------
+#
 
 @app.get(
     "/health",
