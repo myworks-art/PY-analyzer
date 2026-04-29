@@ -1,6 +1,6 @@
-"""
-Правила производительности (PERF001–PERF005).
-"""
+#
+# Производительность (PERF001–PERF005).
+#
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ from analyzer.parsers.yaml_parser import ParsedPipeline, _get_pos
 from analyzer.rules.base import BaseRule, Category, Severity
 from analyzer.rules.registry import registry
 
-# Паттерны команд установки зависимостей
 _INSTALL_PATTERNS = re.compile(
     r"\b(pip install|pip3 install|npm install|npm ci|yarn install|"
     r"mvn install|gradle build|composer install|bundle install|"
@@ -23,7 +22,6 @@ _INSTALL_PATTERNS = re.compile(
 
 @registry.register
 class NoDependencyCacheRule(BaseRule):
-    """PERF001 — Установка зависимостей без кэша."""
 
     rule_id = "PERF001"
     severity = Severity.WARNING
@@ -33,7 +31,6 @@ class NoDependencyCacheRule(BaseRule):
     def check(self, pipeline: ParsedPipeline) -> list:
         issues = []
         for job in pipeline.jobs:
-            # Если у джоба нет cache — ищем установку зависимостей в скриптах
             has_cache = "cache" in job.data
             if has_cache:
                 continue
@@ -59,14 +56,13 @@ class NoDependencyCacheRule(BaseRule):
                                 ),
                             )
                         )
-                        break  # достаточно одного совпадения на script_key
+                        break
 
         return issues
 
 
 @registry.register
 class ArtifactsNoExpireRule(BaseRule):
-    """PERF002 — Артефакты без срока жизни."""
 
     rule_id = "PERF002"
     severity = Severity.INFO
@@ -97,14 +93,12 @@ class ArtifactsNoExpireRule(BaseRule):
 
 @registry.register
 class ExcessiveTimeoutRule(BaseRule):
-    """PERF003 — Избыточный таймаут джоба."""
 
     rule_id = "PERF003"
     severity = Severity.INFO
     category = Category.PERFORMANCE
     description = "Таймаут джоба превышает 2 часа"
 
-    # Разбираем строки вида: "3h", "3h 30m", "200m", "7200"
     _TIMEOUT_PATTERN = re.compile(
         r"(?:(\d+)\s*h(?:ours?)?)?\s*(?:(\d+)\s*m(?:in(?:utes?)?)?)?\s*(?:(\d+)\s*s(?:ec(?:onds?)?)?)?",
         re.IGNORECASE,
@@ -137,9 +131,7 @@ class ExcessiveTimeoutRule(BaseRule):
         return issues
 
     def _parse_timeout_minutes(self, value: str) -> int | None:
-        """Конвертировать строку таймаута в минуты."""
         value = value.strip()
-        # Просто число — секунды
         if value.isdigit():
             return int(value) // 60
         m = self._TIMEOUT_PATTERN.match(value)
@@ -152,7 +144,6 @@ class ExcessiveTimeoutRule(BaseRule):
 
 @registry.register
 class DuplicateBeforeScriptRule(BaseRule):
-    """PERF005 — Одинаковый before_script в нескольких джобах."""
 
     rule_id = "PERF005"
     severity = Severity.WARNING
@@ -161,8 +152,7 @@ class DuplicateBeforeScriptRule(BaseRule):
 
     def check(self, pipeline: ParsedPipeline) -> list:
         issues = []
-        # Собираем before_script из всех джобов
-        scripts: dict[str, list[str]] = {}  # job_name -> before_script строки
+        scripts: dict[str, list[str]] = {}
 
         for job in pipeline.jobs:
             bs = job.data.get("before_script")
@@ -172,7 +162,6 @@ class DuplicateBeforeScriptRule(BaseRule):
                     scripts[key] = []
                 scripts[key].append(job.name)
 
-        # Если одинаковый before_script у 2+ джобов
         for script_content, job_names in scripts.items():
             if len(job_names) >= 2:
                 first_job = next(j for j in pipeline.jobs if j.name == job_names[0])
@@ -196,19 +185,17 @@ class DuplicateBeforeScriptRule(BaseRule):
 
 @registry.register
 class NoParallelismRule(BaseRule):
-    """PERF004 — Независимые джобы не используют needs для параллельного запуска."""
 
     rule_id = "PERF004"
     severity = Severity.INFO
     category = Category.PERFORMANCE
     description = "Несколько джобов в одной стадии не используют needs/parallel"
 
-    _MIN_JOBS_PER_STAGE = 3  # проверяем только если джобов >= 3 в одной стадии
+    _MIN_JOBS_PER_STAGE = 3
 
     def check(self, pipeline: ParsedPipeline) -> list:
         issues = []
 
-        # Группируем джобы по стадии
         by_stage: dict[str, list] = {}
         for job in pipeline.jobs:
             stage = str(job.data.get("stage", "test"))
@@ -218,7 +205,6 @@ class NoParallelismRule(BaseRule):
             if len(jobs) < self._MIN_JOBS_PER_STAGE:
                 continue
 
-            # Ни один из джобов не использует needs/parallel
             uses_parallel = any(
                 "needs" in job.data or "parallel" in job.data
                 for job in jobs
