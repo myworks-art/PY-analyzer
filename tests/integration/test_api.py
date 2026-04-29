@@ -1,11 +1,11 @@
-"""
-Интеграционные тесты API.
+#
+# Интеграционные тесты API.
+#
+# httpx AsyncClient + in-memory SQLite БД.
+#
+# Запуск: pytest tests/integration/test_api.py -v
+#
 
-Используем httpx AsyncClient + тестовую in-memory SQLite БД.
-
-Запуск:
-    pytest tests/integration/test_api.py -v
-"""
 from __future__ import annotations
 
 import pytest
@@ -16,17 +16,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from api.database import Base, get_db
 from api.main import app
 
-# ---------------------------------------------------------------------------
-# Фикстуры — тестовая БД в памяти
-# ---------------------------------------------------------------------------
+# 
+# Fixtures
+# 
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest_asyncio.fixture(scope="function")
 async def test_db_session():
-    """Отдельная in-memory БД для каждого теста."""
-    engine = create_async_engine(TEST_DATABASE_URL)
+     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -41,8 +40,7 @@ async def test_db_session():
 
 @pytest_asyncio.fixture(scope="function")
 async def client(test_db_session: AsyncSession):
-    """HTTP-клиент с подменённой зависимостью БД."""
-
+  
     async def override_get_db():
         yield test_db_session
 
@@ -56,9 +54,9 @@ async def client(test_db_session: AsyncSession):
     app.dependency_overrides.clear()
 
 
-# ---------------------------------------------------------------------------
+# 
 # GET /health
-# ---------------------------------------------------------------------------
+# 
 
 class TestHealth:
 
@@ -73,13 +71,11 @@ class TestHealth:
     @pytest.mark.asyncio
     async def test_health_reports_rule_count(self, client: AsyncClient):
         response = await client.get("/health")
-        # Мы написали 21 правило
         assert response.json()["rules_loaded"] >= 15
 
-
-# ---------------------------------------------------------------------------
+#
 # POST /analyze
-# ---------------------------------------------------------------------------
+#
 
 MINIMAL_YAML = """\
 image: python:3.12-slim
@@ -124,10 +120,9 @@ class TestAnalyzeText:
         response = await client.post("/analyze/", json={"content": BAD_YAML})
         data = response.json()
         summary = data["summary"]
-        # BAD_YAML должен триггерить минимум SEC001 и SEC002
         assert summary["total"] >= 2
-        assert summary["error"] >= 1   # SEC001
-        assert summary["warning"] >= 1  # SEC002
+        assert summary["error"] >= 1  
+        assert summary["warning"] >= 1
 
     @pytest.mark.asyncio
     async def test_analyze_issue_has_rule_id(self, client: AsyncClient):
@@ -161,7 +156,6 @@ deploy-staging:
 """
         response = await client.post("/analyze/", json={"content": clean})
         data = response.json()
-        # Может быть несколько INFO, но не должно быть ERROR
         errors = [i for i in data["issues"] if i["severity"] == "error"]
         assert errors == []
 
@@ -184,9 +178,9 @@ deploy-staging:
         assert response.json()["filename"] == "my-pipeline.yml"
 
 
-# ---------------------------------------------------------------------------
+# 
 # GET /history
-# ---------------------------------------------------------------------------
+# 
 
 class TestHistory:
 
@@ -217,9 +211,9 @@ class TestHistory:
         assert len(response.json()) == 3
 
 
-# ---------------------------------------------------------------------------
+# 
 # GET /result/{id}
-# ---------------------------------------------------------------------------
+#
 
 class TestGetResult:
 
