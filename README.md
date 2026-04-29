@@ -97,7 +97,7 @@ Swagger UI: http://localhost:8000/docs
 ## Структура проекта
 
 ```
-cicd-analyzer/
+PY-analyzer/
 ├── analyzer/                  # Ядро анализатора (Python)
 │   ├── main.py                # CLI точка входа
 │   ├── logger.py              # Централизованное логирование
