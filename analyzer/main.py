@@ -1,12 +1,12 @@
-"""
-CLI для CI/CD Pipeline Analyzer.
-
-Использование:
-    python -m analyzer check .gitlab-ci.yml
-    python -m analyzer check .gitlab-ci.yml --format json
-    python -m analyzer check .gitlab-ci.yml --format sarif
-    python -m analyzer check .gitlab-ci.yml --severity error
-"""
+#
+#CLI for CI/CD Pipeline Analyzer.
+#
+#Usage:
+#    python -m analyzer check .gitlab-ci.yml
+#    python -m analyzer check .gitlab-ci.yml --format json
+#    python -m analyzer check .gitlab-ci.yml --format sarif
+#    python -m analyzer check .gitlab-ci.yml --severity error
+#
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command")
 
-    # --- check ---
+    # check
     check = sub.add_parser("check", help="Проанализировать файл")
     check.add_argument("file", help="Путь к .gitlab-ci.yml")
     check.add_argument(
@@ -48,7 +48,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def cmd_check(args: argparse.Namespace) -> int:
-    """Обработчик команды check. Возвращает exit code."""
     from analyzer.parsers.yaml_parser import YamlParser
     from analyzer.rules import registry
     from analyzer.rules.base import Severity
@@ -61,7 +60,6 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(f"Ошибка: {path} не является файлом", file=sys.stderr)
         return 2
 
-    # Парсим
     try:
         parser = YamlParser()
         pipeline = parser.parse_file(path)
@@ -69,10 +67,8 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(f"Ошибка парсинга YAML: {e}", file=sys.stderr)
         return 2
 
-    # Запускаем правила
     issues = registry.run_all(pipeline)
 
-    # Фильтрация по severity
     severity_levels = {
         "error": {Severity.ERROR},
         "warning": {Severity.ERROR, Severity.WARNING},
@@ -81,7 +77,6 @@ def cmd_check(args: argparse.Namespace) -> int:
     allowed = severity_levels[args.severity]
     issues = [i for i in issues if i.severity in allowed]
 
-    # Вывод
     if args.format == "json":
         _output_json(issues, pipeline.filename)
     elif args.format == "sarif":
@@ -89,7 +84,6 @@ def cmd_check(args: argparse.Namespace) -> int:
     else:
         _output_text(issues, pipeline.filename)
 
-    # Exit code: 1 если есть ERROR, иначе 0
     has_errors = any(i.severity.value == "error" for i in issues)
     return 1 if has_errors else 0
 
@@ -101,13 +95,13 @@ def _output_text(issues: list, filename: str) -> None:
     print("─" * 60)
 
     if not issues:
-        print("✅ Проблем не найдено!")
+        print(" Проблем не найдено!")
         return
 
     for issue in issues:
         print(issue)
         if issue.fix_suggestion:
-            print(f"   💡 {issue.fix_suggestion}")
+            print(f"  {issue.fix_suggestion}")
         print()
 
     print("─" * 60)
@@ -136,8 +130,7 @@ def _output_json(issues: list, filename: str) -> None:
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
-def _output_sarif(issues: list, path: Path) -> None:
-    """SARIF 2.1.0 — совместим с GitLab CodeQuality и GitHub Security."""
+def _output_sarif(issues: list, path: Path) -> None:   
     rules_seen: dict[str, dict] = {}
     results = []
 
@@ -179,7 +172,6 @@ def _output_sarif(issues: list, path: Path) -> None:
             "properties": {},
         }
 
-        # Дополнительный контекст в properties
         if issue.job_name:
             result["properties"]["jobName"] = issue.job_name
         if issue.fix_suggestion:
