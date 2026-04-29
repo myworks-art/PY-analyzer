@@ -1,8 +1,3 @@
-"""
-База данных: SQLAlchemy модели + управление сессией.
-
-Используем SQLite через aiosqlite для async-совместимости с FastAPI.
-"""
 from __future__ import annotations
 
 import os
@@ -26,18 +21,17 @@ class Base(DeclarativeBase):
     pass
 
 
-# ---------------------------------------------------------------------------
-# Модели
-# ---------------------------------------------------------------------------
+#
+# Models
+#
 
 class Analysis(Base):
-    """Результат одного запуска анализатора."""
     __tablename__ = "analysis"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    yaml_hash: Mapped[str] = mapped_column(String(64), nullable=False)  # sha256 входного YAML
+    yaml_hash: Mapped[str] = mapped_column(String(64), nullable=False)  
     total_issues: Mapped[int] = mapped_column(Integer, default=0)
     error_count: Mapped[int] = mapped_column(Integer, default=0)
     warning_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -49,8 +43,7 @@ class Analysis(Base):
 
 
 class IssueRecord(Base):
-    """Одна найденная проблема, привязанная к анализу."""
-    __tablename__ = "issue"
+       __tablename__ = "issue"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     analysis_id: Mapped[int] = mapped_column(
@@ -68,9 +61,9 @@ class IssueRecord(Base):
     analysis: Mapped[Analysis] = relationship("Analysis", back_populates="issues")
 
 
-# ---------------------------------------------------------------------------
-# Dependency для FastAPI
-# ---------------------------------------------------------------------------
+#
+# Dependency for FastAPI
+# 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
@@ -78,6 +71,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Создать таблицы при старте приложения."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
