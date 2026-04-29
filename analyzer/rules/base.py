@@ -1,13 +1,3 @@
-"""
-Базовые классы для системы правил анализатора.
-
-Иерархия:
-    BaseRule          — абстрактный базовый класс для всех правил
-    Issue             — одна найденная проблема
-    Severity          — уровень серьёзности (ERROR / WARNING / INFO)
-    Category          — категория правила (SECURITY / PERFORMANCE / ...)
-"""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -17,9 +7,9 @@ from enum import Enum
 from analyzer.parsers.yaml_parser import ParsedPipeline
 
 
-# ---------------------------------------------------------------------------
+#
 # Перечисления
-# ---------------------------------------------------------------------------
+#
 
 class Severity(str, Enum):
     ERROR = "error"
@@ -39,37 +29,30 @@ class Category(str, Enum):
 
     def label(self) -> str:
         return {
-            "security": "🔒 Безопасность",
-            "performance": "⚡ Производительность",
-            "reliability": "✅ Надёжность",
-            "best_practices": "📐 Best Practices",
+            "security": "Безопасность",
+            "performance": "Производительность",
+            "reliability": "Надёжность",
+            "best_practices": "Best Practices",
         }[self.value]
 
 
-# ---------------------------------------------------------------------------
-# Issue — одна найденная проблема
-# ---------------------------------------------------------------------------
+# 
+# Issue
+# 
 
 @dataclass
 class Issue:
-    """
-    Одна проблема, найденная правилом.
-
-    Пример вывода:
-        ERROR  [SEC001] In "pipeline.yml" in row 12 — Possible secret in variable 'DB_PASSWORD'
-    """
-    rule_id: str                        # "SEC001"
+    rule_id: str
     severity: Severity
     category: Category
-    message: str                        # человекочитаемое описание
-    line: int = 0                       # 1-based
-    col: int = 0                        # 1-based
-    job_name: str | None = None         # имя джоба (если применимо)
-    fix_suggestion: str | None = None   # краткая рекомендация
-    filename: str = ".gitlab-ci.yml"    # имя исходного файла
+    message: str
+    line: int = 0
+    col: int = 0
+    job_name: str | None = None
+    fix_suggestion: str | None = None
+    filename: str = ".gitlab-ci.yml"
 
     def location_str(self) -> str:
-        """Форматированная строка местоположения: In "file.yml" in row N."""
         parts = [f'In "{self.filename}"']
         if self.line > 0:
             parts.append(f"in row {self.line}")
@@ -97,34 +80,11 @@ class Issue:
         )
 
 
-# ---------------------------------------------------------------------------
-# BaseRule — абстрактный базовый класс
-# ---------------------------------------------------------------------------
+# 
+# BaseRule
+# 
 
 class BaseRule(ABC):
-    """
-    Базовый класс для всех правил анализатора.
-
-    Чтобы добавить новое правило:
-        1. Создай класс, наследующий BaseRule
-        2. Заполни rule_id, severity, category, description
-        3. Реализуй метод check()
-        4. Задекорируй класс @registry.register
-
-    Пример:
-        @registry.register
-        class NoLatestImageRule(BaseRule):
-            rule_id = "SEC002"
-            severity = Severity.WARNING
-            category = Category.SECURITY
-            description = "Image uses 'latest' tag"
-
-            def check(self, pipeline: ParsedPipeline) -> list[Issue]:
-                issues = []
-                # ... логика проверки ...
-                return issues
-    """
-
     rule_id: str = ""
     severity: Severity = Severity.INFO
     category: Category = Category.BEST_PRACTICES
@@ -132,15 +92,7 @@ class BaseRule(ABC):
 
     @abstractmethod
     def check(self, pipeline: ParsedPipeline) -> list[Issue]:
-        """
-        Запустить проверку на распарсенном пайплайне.
 
-        Args:
-            pipeline: результат парсинга .gitlab-ci.yml
-
-        Returns:
-            Список найденных проблем (пустой список = всё хорошо).
-        """
         ...
 
     def _make_issue(
@@ -151,7 +103,7 @@ class BaseRule(ABC):
         job_name: str | None = None,
         fix_suggestion: str | None = None,
     ) -> Issue:
-        """Удобный хелпер для создания Issue с заполненными rule_id/severity/category."""
+       
         return Issue(
             rule_id=self.rule_id,
             severity=self.severity,
