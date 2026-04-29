@@ -1,5 +1,5 @@
 #
-#Использование:
+# Использование:
 #    from analyzer.rules.registry import registry
 #
 # Получить все правила
