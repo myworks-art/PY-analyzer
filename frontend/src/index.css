@@ -179,3 +179,4 @@ input,textarea{font-family:var(--mono)}
 .err-box{background:var(--red-bg);border:1px solid rgba(239,68,68,.2);border-radius:var(--r);padding:.75rem 1rem;font-family:var(--mono);font-size:12px;color:var(--red)}
 .input-sm{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:12px;padding:.4rem .75rem;outline:none;transition:border-color var(--t)}
 .input-sm:focus{border-color:var(--border-2)}
+ 

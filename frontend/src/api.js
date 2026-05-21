@@ -30,3 +30,4 @@ async function req(url, opts = {}) {
   if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`)
   return j
 }
+ 
