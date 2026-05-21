@@ -1,39 +1,44 @@
-# backend entrance point
-#
-# Запуск: uvicorn api.main:app --reload --port 8000
-#
-# Документация:
-#   http://localhost:8000/docs     (Swagger UI)
-#   http://localhost:8000/redoc    (ReDoc)
-
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from api.database import init_db
 from api.routers import analyze, history
 from api.schemas.models import HealthSchema
-from analyzer.rules import registry
+from analyzer.rules.registry import registry
+#импорт всех модулей правил
+#запускает @registry.register декораторы
+import analyzer.rules.security       # noqa: F401
+import analyzer.rules.performance    # noqa: F401
+import analyzer.rules.reliability    # noqa: F401
+import analyzer.rules.best_practices # noqa: F401
+
+# Rate limiter — идентифицируем по IP
+limiter = Limiter(key_func=get_remote_address)
 
 
 import os
 
-# CORS origins: в prod задайте ALLOWED_ORIGINS="https://your-domain.com"
+# CORS origins: ALLOWED_ORIGINS="https:/domain.com" (LATER)
 _raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
 _ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
 # 
-# Lifespan — инициализация при старте
-# 
+# Lifespan
+#
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     yield
-    # cleanup can be added
+    #можно добавить cleanup при остановке
 
 
 # 
@@ -47,13 +52,17 @@ app = FastAPI(
         "Выявляет проблемы **безопасности**, **производительности**, "
         "**надёжности** и нарушения **best practices**."
     ),
-    version="0.1.0",
+    version="0.1.1",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
+# Rate limiting: не более 30 з/м
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# CORS — allow requests from React Dev Serv
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
@@ -62,13 +71,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Connect routers
 app.include_router(analyze.router)
 app.include_router(history.router)
 
 
-#
+# 
 # Health check
-#
+# 
 
 @app.get(
     "/health",
