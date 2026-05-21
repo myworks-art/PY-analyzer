@@ -3,12 +3,13 @@ from __future__ import annotations
 import hashlib
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from analyzer.parsers.yaml_parser import YamlParser
-from analyzer.rules import registry
+from analyzer.rules.registry import registry
 from analyzer.rules.base import Severity
 from analyzer.logger import get_logger
 from api.database import Analysis, IssueRecord, get_db
@@ -17,17 +18,19 @@ from api.schemas.models import AnalysisResultSchema, AnalyzeRequest, SummarySche
 log = get_logger("api.analyze")
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
+limiter = Limiter(key_func=get_remote_address)
 
 _parser = YamlParser()
-MAX_YAML_SIZE = 512 * 1024
+MAX_YAML_SIZE = 512 * 1024  # 512 KB
 
 
-#
+# 
 # Helpers
-#
+# 
 
 def _run_analysis(content: str, filename: str) -> tuple[list, dict]:
-     try:
+    """Парсинг YAML и запуск правил. Return: issues, summary."""
+    try:
         pipeline = _parser.parse_string(content, filename=filename)
     except Exception as e:
         raise HTTPException(
@@ -52,6 +55,7 @@ async def _save_to_db(
     issues: list,
     summary: dict,
 ) -> Analysis:
+    """Сохранить результат анализа в БД."""
     yaml_hash = hashlib.sha256(content.encode()).hexdigest()
 
     record = Analysis(
@@ -63,7 +67,7 @@ async def _save_to_db(
         info_count=summary["info"],
     )
     db.add(record)
-    await db.flush() 
+    await db.flush()  # get record.id
 
     for issue in issues:
         db.add(IssueRecord(
@@ -97,8 +101,8 @@ def _build_response(record: Analysis, issues: list) -> AnalysisResultSchema:
         issues=[
             IssueSchema(
                 rule_id=i.rule_id,
-                severity=i.severity,
-                category=i.category,
+                severity=i.severity,          # type: ignore[arg-type]
+                category=i.category,          # type: ignore[arg-type]
                 message=i.message,
                 location=i.location_str(),
                 line=i.line,
@@ -112,9 +116,9 @@ def _build_response(record: Analysis, issues: list) -> AnalysisResultSchema:
     )
 
 
-#
+# 
 # Endpoints
-#
+# 
 
 @router.post(
     "/",
@@ -123,7 +127,9 @@ def _build_response(record: Analysis, issues: list) -> AnalysisResultSchema:
     summary="Анализ YAML (JSON body)",
     description="Принимает содержимое .gitlab-ci.yml как текст, возвращает структурированный отчёт.",
 )
+@limiter.limit("30/minute")
 async def analyze_text(
+    request: Request,
     body: AnalyzeRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AnalysisResultSchema:
