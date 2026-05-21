@@ -1,28 +1,27 @@
-FROM python:3.12-slim AS builder
-
-WORKDIR /build
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
-
-
-FROM python:3.12-slim AS runtime
-
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Stage 1: build React app
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY --from=builder /install /usr/local
-COPY analyzer/ ./analyzer/
-COPY api/      ./api/
+COPY package.json ./
+RUN npm install
 
-RUN mkdir -p /app/data /app/logs && chown -R appuser:appuser /app
+COPY . .
+RUN npm run build
 
-USER appuser
 
-EXPOSE 8000
+# Stage 2: serve with nginx
+FROM nginx:alpine AS runtime
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+# Rm def nginx conf
+RUN rm /etc/nginx/conf.d/default.conf
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Cfg
+COPY nginx.conf /etc/nginx/conf.d/app.conf
+
+# React-app
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

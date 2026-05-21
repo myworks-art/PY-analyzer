@@ -2,20 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const ITEMS = [
-  { path: '/',          label: 'Главная',           icon: '~' },
+  { path: '/',        label: 'Главная',          icon: '~' },
   { divider: true },
-  { path: '/upload',    label: 'Загрузить файл',    icon: '>' },
-  { path: '/history',   label: 'История проверок',  icon: '#' },
+  { path: '/upload',  label: 'Загрузить файл',   icon: '>' },
+  { path: '/history', label: 'История проверок', icon: '#' },
   { divider: true },
-  { path: '/docs',      label: 'Документация',       icon: '?' },
-  { path: '/help',      label: 'Помощь',             icon: '!' },
+  { path: '/docs',    label: 'Документация',      icon: '?' },
+  { path: '/help',    label: 'Помощь',            icon: '!' },
 ]
 
 export default function NavMenu() {
   const [open, setOpen] = useState(false)
-  const ref  = useRef(null)
-  const nav  = useNavigate()
-  const loc  = useLocation()
+  const ref = useRef(null)
+  const nav = useNavigate()
+  const loc = useLocation()
 
   useEffect(() => {
     const close = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
@@ -28,12 +28,9 @@ export default function NavMenu() {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button className={`menu-btn ${open ? 'open' : ''}`} onClick={() => setOpen(v => !v)}>
-        <div className="hamburger">
-          <span /><span /><span />
-        </div>
+        <div className="hamburger"><span /><span /><span /></div>
         Меню
       </button>
-
       {open && (
         <div className="dropdown">
           {ITEMS.map((item, i) =>
@@ -45,9 +42,7 @@ export default function NavMenu() {
                   className={`dropdown-item ${loc.pathname === item.path ? 'active' : ''}`}
                   onClick={() => go(item.path)}
                 >
-                  <span className="dropdown-icon" style={{ fontFamily: 'var(--mono)' }}>
-                    {item.icon}
-                  </span>
+                  <span className="dropdown-icon" style={{ fontFamily: 'var(--mono)' }}>{item.icon}</span>
                   {item.label}
                 </button>
               )

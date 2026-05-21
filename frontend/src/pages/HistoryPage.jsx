@@ -1,26 +1,26 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getHistory, deleteResult } from '../api'
+import { getHistory, deleteResult } from '../api.js'
 
 const fmt = iso => new Date(iso).toLocaleString('ru-RU', {
-  day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'
+  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
 })
 
 export default function HistoryPage() {
   const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(null)
+  const [loading, setLoad] = useState(true)
+  const [deleting, setDel] = useState(null)
 
   useEffect(() => {
-    getHistory(50).then(setItems).catch(() => {}).finally(() => setLoading(false))
+    getHistory(50).then(setItems).catch(() => {}).finally(() => setLoad(false))
   }, [])
 
   async function del(e, id) {
     e.preventDefault(); e.stopPropagation()
     if (!confirm('Удалить запись?')) return
-    setDeleting(id)
+    setDel(id)
     try { await deleteResult(id); setItems(p => p.filter(i => i.id !== id)) } catch {}
-    setDeleting(null)
+    setDel(null)
   }
 
   return (
@@ -30,13 +30,8 @@ export default function HistoryPage() {
         <div className="ph-title">История проверок</div>
         <div className="ph-sub">{items.length} записей</div>
       </div>
-
       {loading && <div className="empty"><div className="spinner" style={{ margin: '0 auto' }} /></div>}
-
-      {!loading && items.length === 0 && (
-        <div className="empty">История пуста — запустите первый анализ</div>
-      )}
-
+      {!loading && items.length === 0 && <div className="empty">История пуста — запустите первый анализ</div>}
       {!loading && items.length > 0 && (
         <div className="hist-list">
           {items.map(item => (
@@ -51,13 +46,9 @@ export default function HistoryPage() {
                 {item.summary.info    > 0 && <span className="hb i">{item.summary.info} INFO</span>}
                 {item.summary.total  === 0 && <span className="hb ok">OK</span>}
               </div>
-              <button
-                className="btn btn-ghost btn-sm"
-                style={{ opacity: 0.45 }}
-                onClick={e => del(e, item.id)}
-                disabled={deleting === item.id}
-              >
-                {deleting === item.id ? <div className="spinner" style={{ width:12, height:12 }} /> : 'x'}
+              <button className="btn btn-ghost btn-sm" style={{ opacity: .45 }}
+                onClick={e => del(e, item.id)} disabled={deleting === item.id}>
+                {deleting === item.id ? <div className="spinner" style={{ width: 12, height: 12 }} /> : 'x'}
               </button>
             </Link>
           ))}
